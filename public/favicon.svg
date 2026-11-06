@@ -1,0 +1,5 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+<rect width="64" height="64" rx="19" fill="#16B9CB"/>
+<path d="M14 36c0-7 5-12 12-12 4 0 7 2 9 5 2-2 5-3 8-3 6 0 10 4 10 10s-4 10-10 10H24c-6 0-10-4-10-10Z" fill="#F7FCFF"/>
+<text x="32" y="39" text-anchor="middle" font-size="15" font-weight="700" font-family="Arial, sans-serif" fill="#155B91">DA</text>
+</svg>
