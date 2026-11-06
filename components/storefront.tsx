@@ -176,7 +176,7 @@ export function Storefront() {
         <div className="container hero-inner">
           <div className="hero-copy">
             <div className="eyebrow"><span className="eyebrow-line"/> MOOD IN THE CLOUDS <span className="eyebrow-star">✦</span></div>
-            <h1>Dán đúng <em>Mood,</em><br/>Diện đúng <em>Mốt.</em></h1>
+            <h1>Dán đúng <em>Mood,</em><br/>Diện đúng <em>Mố<span className="hero-tight-t">t.</span></em></h1>
             <p>Miếng dán mụn DermaAngel — 5 thiết kế, 5 cách thể hiện cá tính. Chăm sóc bản thân theo cách mình yêu thích.</p>
             <div className="hero-buttons"><a className="button button-primary" href="#collection">Khám phá bộ sưu tập <ArrowRight size={17}/></a><a className="button button-light" href="#moods">Chọn mood của bạn</a></div>
             <div className="hero-foot"><span><i/> 5 thiết kế</span><span><i/> Giá tham chiếu 63.000 ₫/hộp</span></div>
