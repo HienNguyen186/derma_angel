@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DermaAngel — Mood in the Clouds
 
 Website giới thiệu và tiếp nhận yêu cầu đặt hàng cho 5 thiết kế DermaAngel của đội Form V. Nội dung và luồng sử dụng được đối chiếu với `01_Noi_dung_website_Form_V.docx` và `02_Yeu_cau_trien_khai_web_Form_V.docx` trong thư mục dự án cha. Bản Sites hiện dành riêng cho chủ dự án.
@@ -55,3 +56,6 @@ Mở `http://127.0.0.1:5173/`. Admin cục bộ: `http://127.0.0.1:5173/signin-w
 Cần Form V cung cấp hoặc xác nhận giá bán, số lượng từng mẫu, điểm và lịch nhận, khu vực/phí giao, kênh liên hệ, hướng dẫn sản phẩm, điều kiện đổi trả, nội dung bảo mật và chi tiết thanh toán. UI thể hiện phần chưa được xác nhận; không tự điền thông tin kinh doanh. Chưa tích hợp VNPay/MoMo, GA4, Meta Pixel, đồng bộ sàn hay đơn vị vận chuyển. Ghi nhận lượt truy cập nội bộ chỉ sau khi khách đồng ý. Admin cần cấu hình sao lưu D1/R2 trước khi vận hành công khai.
 
 Xem [hợp đồng API](docs/API.md) để tích hợp và kiểm tra.
+=======
+# derma_angel
+>>>>>>> 6e71795309136ed7b424b9bfd2279e368d08f623
