@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # DermaAngel — Mood in the Clouds
 
 Website giới thiệu và tiếp nhận yêu cầu đặt hàng cho 5 thiết kế DermaAngel của đội Form V. Nội dung và luồng sử dụng được đối chiếu với `01_Noi_dung_website_Form_V.docx` và `02_Yeu_cau_trien_khai_web_Form_V.docx` trong thư mục dự án cha. Bản Sites hiện dành riêng cho chủ dự án.
@@ -49,13 +48,25 @@ npm run dev
 
 Mở `http://127.0.0.1:5173/`. Admin cục bộ: `http://127.0.0.1:5173/signin-with-chatgpt?return_to=/admin`. Dữ liệu D1/R2 cục bộ nằm trong `.wrangler/state`, riêng với bản Sites. Chỉ áp dụng mỗi migration một lần cho cùng database.
 
-## Triển khai và việc cần Form V xác nhận
+## Triển khai Cloudflare Workers + D1
+
+`wrangler.cloudflare.jsonc` dùng Worker `dermaangel-form-v` và D1 `dermaangel-form-v`. Bản này độc lập với Sites. Từ thư mục repo:
+
+```powershell
+npm ci
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 migrations apply dermaangel-form-v --remote --config wrangler.cloudflare.jsonc
+npm run build
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js deploy --config wrangler.cloudflare.jsonc
+```
+
+Cloudflare Workers không tự cung cấp các header đăng nhập của Sites. Worker loại bỏ header giả do khách gửi. `/admin` và `/api/admin` chỉ mở sau khi cấu hình Cloudflare Access cho các đường dẫn này, đặt `ACCESS_TEAM_DOMAIN`, `ACCESS_POLICY_AUD` và secret `ADMIN_EMAILS` (danh sách email cách nhau bằng dấu phẩy). Worker xác thực chữ ký JWT của Access và đối chiếu email; thiếu cấu hình thì trả 403. Cần bảo vệ cả `/admin*` và `/api/admin*` trong Cloudflare Access. Không dùng chính sách Access cho toàn Worker vì cửa hàng phải công khai.
+
+Tài khoản Cloudflare hiện chưa bật R2. Không khai báo `BUCKET` trong bản Workers, nên chức năng tải ảnh từ Admin báo chưa cấu hình. Các ảnh sản phẩm gốc trong `public/` vẫn hiển thị. D1 của Workers mới không tự sao chép dữ liệu từ Sites; sản phẩm và KPI khởi tạo được tạo ở lần truy cập đầu. Admin cần xác nhận giá và tồn kho trước khi mở nhận đơn.
+
+## Triển khai Sites và việc cần Form V xác nhận
 
 `.openai/hosting.json` khai báo Sites project, D1 `DB` và R2 `BUCKET`. Sites áp dụng migration đã commit trước khi phát hành Worker. Cần cấu hình secret `ADMIN_EMAILS` cho bản chạy thật và giữ bản phát hành riêng tư cho đến khi đủ dữ liệu vận hành.
 
 Cần Form V cung cấp hoặc xác nhận giá bán, số lượng từng mẫu, điểm và lịch nhận, khu vực/phí giao, kênh liên hệ, hướng dẫn sản phẩm, điều kiện đổi trả, nội dung bảo mật và chi tiết thanh toán. UI thể hiện phần chưa được xác nhận; không tự điền thông tin kinh doanh. Chưa tích hợp VNPay/MoMo, GA4, Meta Pixel, đồng bộ sàn hay đơn vị vận chuyển. Ghi nhận lượt truy cập nội bộ chỉ sau khi khách đồng ý. Admin cần cấu hình sao lưu D1/R2 trước khi vận hành công khai.
 
 Xem [hợp đồng API](docs/API.md) để tích hợp và kiểm tra.
-=======
-# derma_angel
->>>>>>> 6e71795309136ed7b424b9bfd2279e368d08f623

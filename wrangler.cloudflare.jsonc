@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "dermaangel-form-v",
+  "main": "dist/server/index.js",
+  "compatibility_date": "2026-05-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "no_bundle": true,
+  "rules": [{ "type": "ESModule", "globs": ["**/*.js", "**/*.mjs"] }],
+  "assets": { "directory": "dist/client" },
+  "vars": { "NATIVE_CLOUDFLARE": "1" },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "dermaangel-form-v",
+      "database_id": "814ef43b-7e98-4936-8733-5737452061be",
+      "migrations_dir": "drizzle"
+    }
+  ],
+  "observability": { "enabled": true }
+}
