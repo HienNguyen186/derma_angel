@@ -9,7 +9,9 @@ export const products = sqliteTable("products", {
   description: text("description").notNull().default(""),
   image: text("image").notNull(),
   price: integer("price").notNull().default(63000),
+  priceConfirmed: integer("price_confirmed", { mode: "boolean" }).notNull().default(false),
   stock: integer("stock").notNull().default(0),
+  stockConfirmed: integer("stock_confirmed", { mode: "boolean" }).notNull().default(false),
   active: integer("active", { mode: "boolean" }).notNull().default(true),
   featured: integer("featured", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at").notNull(),
@@ -22,6 +24,12 @@ export const orders = sqliteTable("orders", {
   paymentMethod: text("payment_method").notNull(), paymentStatus: text("payment_status").notNull().default("pending"),
   status: text("status").notNull().default("pending"), subtotal: integer("subtotal").notNull(),
   discount: integer("discount").notNull().default(0), shippingFee: integer("shipping_fee"), total: integer("total").notNull(),
+  receiveMethod: text("receive_method").notNull().default("delivery"),
+  requestKey: text("request_key").unique(),
+  consentAt: text("consent_at"),
+  paidAmount: integer("paid_amount").notNull().default(0),
+  refundedAmount: integer("refunded_amount").notNull().default(0),
+  paidAt: text("paid_at"), deliveredAt: text("delivered_at"),
   voucherCode: text("voucher_code"), createdAt: text("created_at").notNull(), updatedAt: text("updated_at").notNull(),
 });
 
@@ -41,6 +49,25 @@ export const reviews = sqliteTable("reviews", {
   id: text("id").primaryKey(), orderId: text("order_id").notNull().references(() => orders.id), productId: text("product_id").notNull().references(() => products.id),
   rating: integer("rating").notNull(), body: text("body").notNull(), displayName: text("display_name").notNull(), phone: text("phone").notNull(),
   status: text("status").notNull().default("pending"), createdAt: text("created_at").notNull(),
+  consentPublic: integer("consent_public", { mode: "boolean" }).notNull().default(false),
+}, (table) => [uniqueIndex("reviews_order_unique").on(table.orderId)]);
+
+export const storeSettings = sqliteTable("store_settings", {
+  id: text("id").primaryKey(),
+  pickupEnabled: integer("pickup_enabled", { mode: "boolean" }).notNull().default(false),
+  deliveryEnabled: integer("delivery_enabled", { mode: "boolean" }).notNull().default(false),
+  pickupLocation: text("pickup_location").notNull().default(""),
+  contactUrl: text("contact_url").notNull().default(""),
+  shippingPolicy: text("shipping_policy").notNull().default(""),
+  returnPolicy: text("return_policy").notNull().default(""),
+  privacyContact: text("privacy_contact").notNull().default(""),
+});
+
+export const orderStatusHistory = sqliteTable("order_status_history", {
+  id: text("id").primaryKey(), orderId: text("order_id").notNull().references(() => orders.id),
+  oldStatus: text("old_status"), newStatus: text("new_status").notNull(),
+  oldPaymentStatus: text("old_payment_status"), newPaymentStatus: text("new_payment_status").notNull(),
+  actor: text("actor").notNull(), createdAt: text("created_at").notNull(),
 });
 
 export const kpis = sqliteTable("kpis", {

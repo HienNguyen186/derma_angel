@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 
 export type Product = {
   id: string; name: string; sku: string; mood: string; description: string;
-  image: string; price: number; stock: number; active: number; featured: number;
+  image: string; price: number; price_confirmed: number; stock: number; stock_confirmed: number; active: number; featured: number;
   created_at: string; rating?: number | null; review_count?: number; sold?: number;
 };
 
@@ -22,11 +22,11 @@ export function userId(request: Request): string | null {
 }
 
 export const seedProducts = [
-  ["glitter", "Glitter", "DA-ABP-GLI", "Lấp lánh", "Mẫu Glitter cho những ngày muốn thêm chút lấp lánh vào phong cách."],
-  ["panda", "Panda", "DA-ABP-PAN", "Dịu dàng", "Họa tiết gấu trúc đáng yêu, nhẹ nhàng và gần gũi."],
-  ["cute-paws", "Cute Paws", "DA-ABP-PAW", "Tinh nghịch", "Họa tiết dấu chân nhỏ cho mood vui tươi mỗi ngày."],
-  ["hologram", "Hologram", "DA-ABP-HOL", "Mộng mơ", "Hiệu ứng sắc màu cho phong cách nổi bật theo cách riêng."],
-  ["kitties", "Kitties", "DA-ABP-KIT", "Đáng yêu", "Mẫu mèo nhỏ dành cho những ngày muốn thật dễ thương."],
+  ["glitter", "Glitter", "DA-ABP-GLI", "Lấp lánh", "Một chút lấp lánh cho ngày bạn muốn nổi bật. Chọn Glitter để thêm điểm nhấn vui tươi cho phong cách của mình."],
+  ["panda", "Panda", "DA-ABP-PAN", "Dịu dàng", "Dịu dàng, gần gũi và có chút đáng yêu. Panda dành cho những ngày bạn muốn chọn một nét nhỏ thật dễ thương."],
+  ["cute-paws", "Cute Paws", "DA-ABP-PAW", "Tinh nghịch", "Một chút tinh nghịch từ những dấu chân xinh. Cute Paws cùng bạn thêm nét vui nhộn cho diện mạo hằng ngày."],
+  ["hologram", "Hologram", "DA-ABP-HOL", "Mộng mơ", "Đổi góc nhìn, đổi sắc màu. Hologram dành cho những ngày bạn muốn thử một điểm nhấn mới."],
+  ["kitties", "Kitties", "DA-ABP-KIT", "Đáng yêu", "Mang một chút đáng yêu theo mình. Kitties là lựa chọn cho những ai yêu những chi tiết nhỏ mang hình mèo."],
 ] as const;
 
 const seedKpis = [
@@ -44,16 +44,23 @@ export async function ensureSeed() {
       "INSERT OR IGNORE INTO products (id,name,sku,mood,description,image,price,stock,active,featured,created_at) VALUES (?,?,?,?,?,'/product-sheet.png',63000,0,1,1,?)"
     ).bind(id, name, sku, mood, description, now)),
     ...seedKpis.map(([key, label, unit, target, actual]) => db.prepare(
-      "INSERT OR IGNORE INTO kpis (key,label,unit,target,actual,source,note,updated_at) VALUES (?,?,?,?,?,'seed','Số liệu khởi tạo theo đề bài; chưa phải dữ liệu đo tự động',?)"
+      "INSERT OR IGNORE INTO kpis (key,label,unit,target,actual,source,note,updated_at) VALUES (?,?,?,?,?,'seed','Tham chiếu trong bảng BTC; không phải kết quả của Form V',?)"
     ).bind(key, label, unit, target, actual, now)),
+    db.prepare("INSERT OR IGNORE INTO store_settings (id) VALUES ('main')"),
   ];
   await db.batch(statements);
+}
+
+export async function publicStoreSettings() {
+  await ensureSeed();
+  const settings = await database().prepare("SELECT pickup_enabled,delivery_enabled,pickup_location,contact_url,shipping_policy,return_policy,privacy_contact FROM store_settings WHERE id='main'").first<Record<string, any>>();
+  return settings || { pickup_enabled: 0, delivery_enabled: 0, pickup_location: "", contact_url: "", shipping_policy: "", return_policy: "", privacy_contact: "" };
 }
 
 export async function catalog(includeInactive = false): Promise<Product[]> {
   await ensureSeed();
   const where = includeInactive ? "" : "WHERE p.active = 1";
-  const result = await database().prepare(`SELECT p.*, (SELECT ROUND(AVG(r.rating),1) FROM reviews r WHERE r.product_id=p.id AND r.status='approved') rating, (SELECT COUNT(*) FROM reviews r WHERE r.product_id=p.id AND r.status='approved') review_count, (SELECT COALESCE(SUM(oi.quantity),0) FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE oi.product_id=p.id AND o.payment_status='paid' AND o.status NOT IN ('cancelled','refunded')) sold FROM products p ${where} ORDER BY p.featured DESC, CASE p.id WHEN 'glitter' THEN 1 WHEN 'panda' THEN 2 WHEN 'cute-paws' THEN 3 WHEN 'hologram' THEN 4 WHEN 'kitties' THEN 5 ELSE 6 END, p.created_at,p.name`).all<Product>();
+  const result = await database().prepare(`SELECT p.*, (SELECT ROUND(AVG(r.rating),1) FROM reviews r WHERE r.product_id=p.id AND r.status='approved') rating, (SELECT COUNT(*) FROM reviews r WHERE r.product_id=p.id AND r.status='approved') review_count, (SELECT COALESCE(SUM(oi.quantity),0) FROM order_items oi JOIN orders o ON o.id=oi.order_id WHERE oi.product_id=p.id AND o.payment_status='paid' AND o.status='delivered') sold FROM products p ${where} ORDER BY p.featured DESC, CASE p.id WHEN 'glitter' THEN 1 WHEN 'panda' THEN 2 WHEN 'cute-paws' THEN 3 WHEN 'hologram' THEN 4 WHEN 'kitties' THEN 5 ELSE 6 END, p.created_at,p.name`).all<Product>();
   return result.results || [];
 }
 

@@ -1,62 +1,56 @@
 # DermaAngel — Mood in the Clouds
 
-Full-stack DermaAngel storefront and Business Admin, built with React/Next.js on Vinext, Cloudflare D1, and R2. The initial hosted Site is owner-private. The customer flow is implemented for a later public launch after verified inventory, shipping policy, product instructions, and access settings are supplied.
+Website giới thiệu và tiếp nhận yêu cầu đặt hàng cho 5 thiết kế DermaAngel của đội Form V. Nội dung và luồng sử dụng được đối chiếu với `01_Noi_dung_website_Form_V.docx` và `02_Yeu_cau_trien_khai_web_Form_V.docx` trong thư mục dự án cha. Bản Sites hiện dành riêng cho chủ dự án.
 
-## What works
+## Hai khu vực
 
-- Storefront: five original package designs, search, design/price/rating/stock filters, sorting, shareable product detail (`/?product=<id>`), cart, favorites for signed-in users, voucher preview, checkout, order tracking by code plus phone, signed-in order history, and verified-purchase review submission.
-- Business Admin: server-checked admin access, product and inventory editing, original-image upload, order/payment/shipping updates, voucher configuration, review moderation, website KPI target versus actual, KPI change history, evidence links and private PNG/JPEG/PDF upload, campaign records, manual channel reports, financial estimates, CSV export, and charts from recorded data.
-- Checkout: backend prices every item, validates stock and voucher limits, saves the order and decrements stock atomically in D1. Orders start in `pending`. Cancellation restores reserved stock and releases a voucher use. COD and bank transfer remain pending until an administrator confirms payment. Shipping cost can be set by Admin before processing.
+- **Customer Storefront** (`/`): trang dài gồm giới thiệu, bộ sưu tập, chọn mood, ưu đãi đang hoạt động, câu chuyện, đánh giá, FAQ và liên hệ. Khách có thể tìm, lọc, xem chi tiết, lưu yêu thích trong trình duyệt, gửi yêu cầu đặt hàng và tra cứu bằng mã đơn cùng số điện thoại. Không cần tài khoản.
+- **Business Admin** (`/admin`): chỉ người có email trong `ADMIN_EMAILS` được vào. Admin quản lý sản phẩm, giá, tồn kho, hình ảnh, phương thức nhận, chính sách, đơn hàng, voucher, đánh giá, KPI website, minh chứng và báo cáo chiến dịch.
 
-## Data provenance and scope
+Ảnh bao bì của Glitter, Panda, Cute Paws, Hologram và Kitties dùng tài liệu sản phẩm gốc được cung cấp. Font Be Vietnam Pro và Lora có bộ ký tự tiếng Việt để dấu không bị tách khỏi chữ trên cả hai khu vực.
 
-- The **website KPI** seed is 200 visits target / 120 actual; 500,000 VND revenue target / 600,000 actual; 5% conversion target / 7% actual; and 4.5 stars target / 4.0 actual. Every initial actual is marked `seed`. Admin can switch each KPI to `manual` or `auto` and edit targets. Automatic figures come only from consented visits, saved orders, paid revenue, and approved reviews.
-- The **campaign target** is separate: 90,000 boxes and 5.67 billion VND across 11/2026–01/2027. The monthly targets are 27,000 / 45,000 / 18,000 boxes. Other-channel results require an Admin report. The campaign summary combines those reports with **paid website orders only**; it never copies the overall target into the website dashboard.
-- The 63,000 VND box price and the five package images came from the supplied proposal. Initial stock is **0** because no verified quantities were supplied. Admin must set real stock before checkout can accept an order. No fake orders, reviews, sales, visits, or evidence are seeded.
-- The 22,050 VND per-box cost is used only for the Admin financial estimate. Incomplete marketing and promotion costs are called out; the estimate is not final profit.
+## Điều kiện mở bán
 
-## Run locally
+Giá 63.000 ₫/hộp trong tài liệu là **giá tham khảo**, không được tự coi là giá bán đã duyệt. Sản phẩm chỉ hiện giá và được thêm vào giỏ sau khi Admin nhập và xác nhận giá, nhập và xác nhận tồn kho dương. Admin chỉ bật nhận trực tiếp khi có điểm nhận, chỉ bật giao hàng khi có thông tin giao hàng. Hiện các cờ xác nhận và phương thức nhận mặc định tắt.
 
-Requires Node.js 22.13+ and npm. From this directory:
+Đơn mới là **yêu cầu đặt hàng**. Backend tính lại giá, kiểm tra tồn và voucher, chống gửi trùng bằng `requestKey`, rồi giữ số lượng trong một giao dịch D1. Đội Form V xác nhận phí giao, cách thanh toán và bàn giao hàng thủ công. Doanh thu website chỉ tính đơn đã thanh toán và giao xong, trừ giảm giá và tiền hoàn; không tính phí giao.
+
+Khách đánh giá bằng mã đơn + số điện thoại sau khi đơn đã thanh toán và giao xong. Mỗi đơn tối đa một đánh giá, chọn 1–5 sao, có thể nhập nhận xét và phải đồng ý công khai tên hiển thị. Admin duyệt trước khi đánh giá xuất hiện; số sao trung bình chỉ lấy đánh giá đã duyệt. Số điện thoại không nằm trong nội dung đánh giá công khai.
+
+Admin có thể chuẩn bị voucher giảm tiền hoặc giảm phần trăm với giá trị đơn tối thiểu, số lượt và thời hạn. Storefront chỉ hiện ưu đãi đang có hiệu lực. Các combo và quà tặng chưa có quy tắc, giá và tồn được duyệt nên chưa được kích hoạt.
+
+## KPI và nguồn số liệu
+
+- KPI website tách khỏi KPI toàn chiến dịch và các báo cáo kênh khác.
+- Các số **120 lượt truy cập, 600.000 ₫, 7%, 4,0 sao** là tham chiếu khởi tạo trong ảnh BTC, **không phải kết quả của Form V**. Admin gắn nhãn nguồn `seed` và có thể sửa mục tiêu, nguồn, minh chứng.
+- Lượt truy cập đo từ người đồng ý ghi nhận; doanh thu từ đơn đã thanh toán và giao xong; điểm sao từ đánh giá đã duyệt. Tỷ lệ chuyển đổi online sang mua trực tiếp chưa có dữ liệu đối soát nên không tự tính từ lượt truy cập và đơn.
+- Mục tiêu chiến dịch 90.000 hộp / 5,67 tỷ ₫ cho 11/2026–01/2027 nằm ở phần chiến dịch riêng. Kết quả các kênh khác cần Admin nhập báo cáo; website không tự nhận toàn bộ doanh số chiến dịch.
+
+## Chạy cục bộ
+
+Yêu cầu Node.js 22.13+ và npm. Trong thư mục này:
 
 ```powershell
 npm ci
 Copy-Item .env.example .dev.vars
 ```
 
-Set `ADMIN_EMAILS=seedy@sites.test` in `.dev.vars` for the built-in local sign-in test account. No password is stored or seeded. Then:
+Đặt `ADMIN_EMAILS=seedy@sites.test` trong `.dev.vars` để thử tài khoản Admin của môi trường Sites cục bộ. Sau đó:
 
 ```powershell
 npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_unusual_dark_beast.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_amused_gargoyle.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_dark_white_queen.sql
 npm run dev
 ```
 
-Open `http://127.0.0.1:5173/`. To test Admin, open `http://127.0.0.1:5173/signin-with-chatgpt?return_to=/admin`. This local sign-in is provided by the Sites development runtime only. Set product stock in Admin before testing checkout. Local D1 and R2 data remain in `.wrangler/state` and are separate from hosted data.
+Mở `http://127.0.0.1:5173/`. Admin cục bộ: `http://127.0.0.1:5173/signin-with-chatgpt?return_to=/admin`. Dữ liệu D1/R2 cục bộ nằm trong `.wrangler/state`, riêng với bản Sites. Chỉ áp dụng mỗi migration một lần cho cùng database.
 
-## Deploy
+## Triển khai và việc cần Form V xác nhận
 
-The tracked `.openai/hosting.json` declares the Sites project, D1 binding `DB`, and R2 binding `BUCKET`. Sites applies the committed Drizzle migrations before deploying the Worker. Configure `ADMIN_EMAILS` as a hosted runtime secret containing the email addresses allowed to manage the store, then build and publish the pushed source through the Sites workflow. The initial Site stays owner-private. A public launch requires an explicit access change and operational review; do not expose the Site publicly while stock, shipping policy, product instructions, and business payment details are unverified.
+`.openai/hosting.json` khai báo Sites project, D1 `DB` và R2 `BUCKET`. Sites áp dụng migration đã commit trước khi phát hành Worker. Cần cấu hình secret `ADMIN_EMAILS` cho bản chạy thật và giữ bản phát hành riêng tư cho đến khi đủ dữ liệu vận hành.
 
-For another Cloudflare Workers deployment, provision D1 and R2, bind them under the same names, apply `drizzle/*.sql` in order, configure `ADMIN_EMAILS`, and deploy the `npm run build` Worker output. Vercel alone cannot run this D1/R2 configuration unchanged.
+Cần Form V cung cấp hoặc xác nhận giá bán, số lượng từng mẫu, điểm và lịch nhận, khu vực/phí giao, kênh liên hệ, hướng dẫn sản phẩm, điều kiện đổi trả, nội dung bảo mật và chi tiết thanh toán. UI thể hiện phần chưa được xác nhận; không tự điền thông tin kinh doanh. Chưa tích hợp VNPay/MoMo, GA4, Meta Pixel, đồng bộ sàn hay đơn vị vận chuyển. Ghi nhận lượt truy cập nội bộ chỉ sau khi khách đồng ý. Admin cần cấu hình sao lưu D1/R2 trước khi vận hành công khai.
 
-Admin CSV exports cover orders and website KPI. Configure provider-level D1 backups and R2 retention before public launch; this source does not claim to implement full database restore.
-
-## Security and privacy
-
-- Admin APIs and evidence files check the Sites-authenticated email against `ADMIN_EMAILS` on the server. A customer cannot use an Admin screen or endpoint without that identity.
-- Checkout ignores client prices and discounts. D1 constraints plus a batch transaction prevent negative stock and excess voucher use under concurrent orders.
-- Guest order lookup requires both order code and phone. Public reviews require a delivered order and Admin approval. Phone numbers are not shown in public reviews.
-- The site records internal visits only after the visitor opts in. The consent choice is stored in the browser. GA4, Meta Pixel, Search Console, and payment gateway scripts are not active.
-- R2 evidence files are Admin-only. Uploaded product images are public. Inputs use bound SQL parameters. No card numbers or payment credentials are stored.
-
-## Not yet active
-
-- VNPay/MoMo and automatic bank transfer confirmation: credentials and approved payment details are missing. Bank transfer orders remain pending for manual follow-up.
-- Combo 3-box, five-design giftset, pouch gifts, and countdowns: no pricing, stock allocation, gift quantities, or activation rules have been approved. The storefront shows no active offer.
-- Official usage instructions, product claims, shipping/returns/privacy policy text, and shipping tariffs: not supplied. The UI explicitly marks these pending; Admin can set shipping for each order.
-- GA4, Meta Pixel, Search Console, third-party channel sync/import, automated carrier updates, and production rate limiting: require integration setup. External channels are manually reported today.
-- Standalone customer registration/password reset and editable profile/address book: the hosted Site uses ChatGPT sign-in for account identity. Guest checkout and signed-in order history/favorites work; those account features are not implemented.
-
-See [API documentation](docs/API.md) for request contracts. The source PDF remains in the parent workspace and is not part of the deployable Site.
+Xem [hợp đồng API](docs/API.md) để tích hợp và kiểm tra.

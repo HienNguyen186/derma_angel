@@ -1,31 +1,30 @@
 # HTTP API
 
-JSON responses use `Cache-Control: no-store`. All mutations validate on the server. Admin requests need a Sites-authenticated email in hosted dispatch matching `ADMIN_EMAILS`; browser clients cannot grant themselves that identity.
+Phản hồi JSON dùng `Cache-Control: no-store`. Tất cả thao tác thay đổi dữ liệu được kiểm tra tại server. API Admin yêu cầu email đã xác thực trong `ADMIN_EMAILS`.
 
-| Endpoint | Method | Purpose |
+| Endpoint | Method | Nội dung |
 |---|---|---|
-| `/api/catalog` | GET | Active products, approved rating/count, recorded sales. `?id=<id>` adds approved reviews. |
-| `/api/voucher` | POST | Preview a voucher with `{code, subtotal}`. Checkout independently recomputes it. |
-| `/api/orders` | POST | Create a pending order from `{items:[{id,quantity}], customerName, phone, email?, address, province, district, ward, note?, paymentMethod:"cod"|"bank_transfer", voucherCode?}`. Prices and totals come from D1. Returns code, status and temporary total. |
-| `/api/orders?code=...&phone=...` | GET | Guest order tracking with both verification fields. |
-| `/api/orders?mine=1` | GET | Signed-in customer's own orders. |
-| `/api/reviews` | POST | `{code,phone,productId,rating,body}` for a delivered purchase; review starts pending. |
-| `/api/favorites` | GET/POST | Signed-in wishlist; POST `{productId}` toggles. |
-| `/api/visit` | POST | `{path,consent:true}` records a visit only after consent. |
-| `/api/admin` | GET | Admin dashboard datasets. `?export=orders` and `?export=kpis` download CSV. |
-| `/api/admin` | POST | Admin mutations, selected by `action` below. |
-| `/api/admin/upload` | POST | Multipart `kind=product|evidence`, `file`. Evidence also requires `kpiKey,title,collectedAt,note?`. Max 8 MB. |
-| `/api/assets/<key>` | GET | Public product images; Admin-only evidence files. |
+| `/api/catalog` | GET | Sản phẩm, cờ xác nhận giá/tồn, đánh giá đã duyệt, cài đặt công khai và voucher đang hiệu lực. `?id=<id>` lấy chi tiết và đánh giá của sản phẩm. |
+| `/api/voucher` | POST | Xem trước `{code,subtotal}`. Khi đặt hàng server tính lại. |
+| `/api/orders` | POST | Gửi yêu cầu `{requestKey,items:[{id,quantity}],customerName,phone,email?,receiveMethod:"pickup"|"delivery",address?,province?,ward?,district?,note?,voucherCode?,orderConsent:true}`. `requestKey` là UUID cho một lần gửi; gửi lại cùng key và số điện thoại trả cùng đơn. |
+| `/api/orders?code=...&phone=...` | GET | Tra cứu đơn bằng mã và số điện thoại. |
+| `/api/reviews` | POST | `{code,phone,productId,displayName,rating,body?,consentPublic:true}`. Chỉ đơn đã thanh toán và giao xong, một đánh giá/đơn; chờ Admin duyệt. |
+| `/api/visit` | POST | `{path,consent:true}`. Chỉ ghi nhận sau khi khách đồng ý. |
+| `/api/admin` | GET | Dữ liệu Admin; `?export=orders` và `?export=kpis` xuất CSV. |
+| `/api/admin` | POST | Thay đổi do Admin thực hiện qua `action` bên dưới. |
+| `/api/admin/upload` | POST | Multipart `kind=product|evidence`, `file`; minh chứng thêm `kpiKey,title,collectedAt,note?`. Tối đa 8 MB. |
+| `/api/assets/<key>` | GET | Ảnh sản phẩm công khai; minh chứng chỉ Admin đọc được. |
 
 ## Admin actions
 
-- `product`: `{id?,name,sku,mood,description,image,price,stock,active,featured}`. Set `active:false` to hide a product. Stock changes create an inventory transaction.
-- `order_status`: `{id,status,paymentStatus,shippingFee}`. Status is pending, confirmed, processing, shipping, delivered, cancelled, or refunded. Payment status is pending, paid, or refunded. Supply shipping fee before processing; use `0` for free shipping. Paid orders cannot change shipping total. Cancellation restores reserved stock.
-- `voucher`: `{code,kind:"fixed"|"percent",amount,minSubtotal,maxUses?,startsAt?,endsAt?,active}`. Voucher checks and usage limits are enforced again at checkout.
-- `kpi`: `{key,target,actual,source:"seed"|"manual"|"auto",note?}`. Keys are visits, revenue, conversion, rating. Every change creates an audit record.
-- `evidence`: `{kpiKey,title,url,note?,collectedAt}` for an HTTPS link. Files use the upload endpoint.
-- `review`: `{id,status:"approved"|"rejected"}`.
-- `channel_report`: `{month:"YYYY-MM",channel,units,revenue,marketingCost,promotionCost,note?}`. Website is excluded here because paid website orders are aggregated automatically.
+- `product`: `{id?,name,sku,mood,description,image,price,priceConfirmed,stock,stockConfirmed,active,featured}`. Giá và tồn kho chưa xác nhận không được đưa vào luồng mua. Thay đổi tồn tạo giao dịch kho.
+- `settings`: `{pickupEnabled,deliveryEnabled,pickupLocation,contactUrl,shippingPolicy,returnPolicy,privacyContact}`. Bật nhận trực tiếp cần điểm nhận; bật giao hàng cần thông tin giao hàng. URL liên hệ cần HTTPS.
+- `order_status`: `{id,status,paymentStatus,shippingFee,paidAmount,refundedAmount}`. Trạng thái đơn: `pending`, `confirmed`, `processing`, `shipping`, `delivered`, `cancelled`, `refunded`; thanh toán: `pending`, `paid`, `refunded`. Giao xong yêu cầu ghi đủ số tiền thực thu. Mọi lần đổi trạng thái có lịch sử.
+- `voucher`: `{code,kind:"fixed"|"percent",amount,minSubtotal,maxUses?,startsAt?,endsAt?,active}`. Điều kiện, hạn dùng và số lượt được kiểm tra lại ở checkout.
+- `review`: `{id,status:"approved"|"rejected"}`. Chỉ đánh giá đã duyệt xuất hiện công khai.
+- `kpi`: `{key,target,actual,source:"seed"|"manual"|"auto",note?}`. Key gồm `visits`, `revenue`, `conversion`, `rating`. `conversion` không nhận `auto` khi chưa có dữ liệu đối soát. Mỗi lần sửa có lịch sử.
+- `evidence`: `{kpiKey,title,url,note?,collectedAt}` cho liên kết HTTPS; file qua endpoint upload.
+- `channel_report`: `{month:"YYYY-MM",channel,units,revenue,marketingCost,promotionCost,note?}`. Kênh website không được nhập ở đây vì doanh thu website được tổng hợp riêng.
 - `campaign`: `{id?,name,description,startsAt?,endsAt?,active}`.
 
-Error responses have `{error}` and an appropriate HTTP status, including 400 for validation, 401/403 for authorization, 404 for missing records, and 409 for stock or voucher conflicts.
+Lỗi trả `{error}` cùng HTTP status phù hợp: `400` dữ liệu sai, `403` không đủ quyền/điều kiện đánh giá, `404` không tìm thấy, `409` xung đột tồn kho, voucher hoặc đánh giá đã gửi.

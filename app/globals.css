@@ -1,3 +1,4 @@
+@import "./fonts.css";
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "../vendor/shadcn-tailwind-4.13.0.css";
@@ -89,7 +90,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --font-sans: Arial, Helvetica, sans-serif;
+  --font-sans: "Be Vietnam Pro", Arial, Helvetica, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     "Liberation Mono", "Courier New", monospace;
 }
@@ -139,7 +140,7 @@ body {
 /* DermaAngel storefront */
 :root { --da-blue:#155b91; --da-cyan:#16b9cb; --da-sky:#9fe9f7; --da-white:#f7fcff; --da-ink:#16446c; --da-lavender:#c6a2eb; }
 html { scroll-behavior:smooth; }
-body { margin:0; background:#f7fcff; color:var(--da-ink); font-family:Arial,Helvetica,sans-serif; }
+body { margin:0; background:#f7fcff; color:var(--da-ink); font-family:"Be Vietnam Pro",Arial,Helvetica,sans-serif; font-synthesis:none; }
 button,input,select,textarea { font:inherit; }
 button { cursor:pointer; }
 button:disabled { cursor:not-allowed; opacity:.55; }
@@ -170,7 +171,6 @@ h1,h2,h3,p { margin-top:0; }
 .hero h1 { font-family:Georgia,'Times New Roman',serif; font-size:clamp(54px,5.3vw,84px); line-height:1.08; letter-spacing:-.06em; font-weight:700; color:#155b91; margin-bottom:22px; }
 .hero h1 em,.section h2 em,.social-section h2 em,.detail-content h2 em { font-weight:400; color:#742cc6; font-family:Georgia,'Times New Roman',serif; }
 .hero h1 em:last-child { font-style:normal; letter-spacing:-.07em; }
-.hero-tight-t { margin-left:-.31em; }
 .hero-copy p { max-width:520px; line-height:1.7; font-size:17px; color:#285e7a; margin-bottom:30px; }
 .hero-buttons,.social-actions { display:flex; flex-wrap:wrap; gap:12px; }
 .button { border:1px solid transparent; border-radius:100px; min-height:47px; padding:0 23px; display:inline-flex; align-items:center; justify-content:center; gap:11px; font-size:13px; font-weight:800; transition:transform .2s,box-shadow .2s,background .2s; }

@@ -15,6 +15,13 @@
       "when": 1793986551088,
       "tag": "0001_amused_gargoyle",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1794125162295,
+      "tag": "0002_dark_white_queen",
+      "breakpoints": true
     }
   ]
 }

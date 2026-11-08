@@ -6,7 +6,7 @@ const channels = ["Shopee Mall", "TikTok Shop", "Sociolla", "Lazada", "Offline R
 async function dashboard() {
   await ensureSeed();
   const db = database();
-  const [products, orders, kpis, evidence, vouchers, reviews, reports, campaigns, inventory, visits, orderStats, rating, history, revenueSeries, visitSeries, productSales, ratingDistribution] = await Promise.all([
+  const [products, orders, kpis, evidence, vouchers, reviews, reports, campaigns, inventory, visits, orderStats, rating, history, revenueSeries, visitSeries, productSales, ratingDistribution, settings] = await Promise.all([
     catalog(true),
     db.prepare("SELECT o.*, (SELECT GROUP_CONCAT(oi.name || ' × ' || oi.quantity, ', ') FROM order_items oi WHERE oi.order_id=o.id) items_summary FROM orders o ORDER BY o.created_at DESC LIMIT 200").all(),
     db.prepare("SELECT * FROM kpis ORDER BY CASE key WHEN 'visits' THEN 1 WHEN 'revenue' THEN 2 WHEN 'conversion' THEN 3 ELSE 4 END").all(),
@@ -17,18 +17,19 @@ async function dashboard() {
     db.prepare("SELECT * FROM campaigns ORDER BY starts_at DESC").all(),
     db.prepare("SELECT t.*,p.name product_name FROM inventory_transactions t JOIN products p ON p.id=t.product_id ORDER BY t.created_at DESC LIMIT 100").all(),
     db.prepare("SELECT COUNT(*) count FROM visits").first<{ count: number }>(),
-    db.prepare("SELECT COUNT(*) orders, COUNT(CASE WHEN status NOT IN ('cancelled','refunded') THEN 1 END) valid_orders, COALESCE(SUM(CASE WHEN payment_status='paid' AND status NOT IN ('cancelled','refunded') THEN total ELSE 0 END),0) paid_revenue, COALESCE(SUM(CASE WHEN status NOT IN ('cancelled','refunded') THEN total ELSE 0 END),0) order_value, COALESCE((SELECT SUM(oi.quantity) FROM order_items oi JOIN orders o2 ON o2.id=oi.order_id WHERE o2.status NOT IN ('cancelled','refunded')),0) units, COALESCE((SELECT SUM(oi.quantity) FROM order_items oi JOIN orders o2 ON o2.id=oi.order_id WHERE o2.payment_status='paid' AND o2.status NOT IN ('cancelled','refunded')),0) paid_units FROM orders").first<Record<string, number>>(),
+    db.prepare("SELECT COUNT(*) orders, COUNT(CASE WHEN status NOT IN ('cancelled','refunded') THEN 1 END) valid_orders, COALESCE(SUM(CASE WHEN payment_status='paid' AND status='delivered' THEN MAX(0,subtotal-discount-refunded_amount) ELSE 0 END),0) paid_revenue, COALESCE(SUM(CASE WHEN status NOT IN ('cancelled','refunded') THEN total ELSE 0 END),0) order_value, COALESCE((SELECT SUM(oi.quantity) FROM order_items oi JOIN orders o2 ON o2.id=oi.order_id WHERE o2.status NOT IN ('cancelled','refunded')),0) units, COALESCE((SELECT SUM(oi.quantity) FROM order_items oi JOIN orders o2 ON o2.id=oi.order_id WHERE o2.payment_status='paid' AND o2.status='delivered'),0) paid_units FROM orders").first<Record<string, number>>(),
     db.prepare("SELECT ROUND(AVG(rating),1) average, COUNT(*) count FROM reviews WHERE status='approved'").first<Record<string, number>>(),
     db.prepare("SELECT * FROM kpi_history ORDER BY created_at DESC LIMIT 100").all(),
-    db.prepare("SELECT substr(created_at,1,10) day, SUM(total) revenue, COUNT(*) orders FROM orders WHERE payment_status='paid' AND status NOT IN ('cancelled','refunded') GROUP BY substr(created_at,1,10) ORDER BY day DESC LIMIT 60").all(),
+    db.prepare("SELECT substr(delivered_at,1,10) day, SUM(MAX(0,subtotal-discount-refunded_amount)) revenue, COUNT(*) orders FROM orders WHERE payment_status='paid' AND status='delivered' AND delivered_at IS NOT NULL GROUP BY substr(delivered_at,1,10) ORDER BY day DESC LIMIT 60").all(),
     db.prepare("SELECT substr(created_at,1,10) day, COUNT(*) visits FROM visits GROUP BY substr(created_at,1,10) ORDER BY day DESC LIMIT 60").all(),
-    db.prepare("SELECT p.name, COALESCE(SUM(CASE WHEN o.payment_status='paid' AND o.status NOT IN ('cancelled','refunded') THEN oi.quantity ELSE 0 END),0) units FROM products p LEFT JOIN order_items oi ON oi.product_id=p.id LEFT JOIN orders o ON o.id=oi.order_id GROUP BY p.id ORDER BY units DESC").all(),
+    db.prepare("SELECT p.name, COALESCE(SUM(CASE WHEN o.payment_status='paid' AND o.status='delivered' THEN oi.quantity ELSE 0 END),0) units FROM products p LEFT JOIN order_items oi ON oi.product_id=p.id LEFT JOIN orders o ON o.id=oi.order_id GROUP BY p.id ORDER BY units DESC").all(),
     db.prepare("SELECT rating, COUNT(*) count FROM reviews WHERE status='approved' GROUP BY rating ORDER BY rating").all(),
+    db.prepare("SELECT * FROM store_settings WHERE id='main'").first(),
   ]);
   const measuredVisits = visits?.count || 0;
   const measuredOrders = orderStats?.valid_orders || 0;
   return {
-    products, orders: orders.results || [], kpis: kpis.results || [], evidence: evidence.results || [],
+    products, orders: orders.results || [], kpis: kpis.results || [], evidence: evidence.results || [], settings,
     vouchers: vouchers.results || [], reviews: reviews.results || [], reports: reports.results || [],
     campaigns: campaigns.results || [], inventory: inventory.results || [], history: history.results || [],
     revenueSeries: (revenueSeries.results || []).reverse(), visitSeries: (visitSeries.results || []).reverse(),
@@ -40,7 +41,7 @@ async function dashboard() {
       orderValue: orderStats?.order_value || 0,
       units: orderStats?.units || 0,
       paidUnits: orderStats?.paid_units || 0,
-      conversion: measuredVisits ? Math.round(measuredOrders / measuredVisits * 1000) / 10 : null,
+      conversion: null,
       rating: rating?.average || null,
       reviewCount: rating?.count || 0,
     },
@@ -61,7 +62,7 @@ export async function GET(request: Request) {
     const data = await dashboard();
     const exportType = new URL(request.url).searchParams.get("export");
     if (exportType === "orders") {
-      const columns = ["code", "created_at", "customer_name", "phone", "status", "payment_status", "items_summary", "subtotal", "discount", "total"];
+      const columns = ["code", "created_at", "customer_name", "phone", "receive_method", "status", "payment_status", "items_summary", "subtotal", "discount", "shipping_fee", "total", "paid_amount", "refunded_amount", "paid_at", "delivered_at"];
       const lines = [columns.join(","), ...(data.orders as Record<string, unknown>[]).map(row => columns.map(key => csvCell(row[key])).join(","))];
       return new Response("\uFEFF" + lines.join("\r\n"), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": "attachment; filename=dermaangel-orders.csv" } });
     }
@@ -94,29 +95,51 @@ export async function POST(request: Request) {
           !(image === "/product-sheet.png" || /^\/api\/assets\/products-[a-f0-9-]+$/.test(image))) return json({ error: "Thông tin sản phẩm không hợp lệ." }, 400);
       const old = await db.prepare("SELECT stock FROM products WHERE id=?").bind(id).first<{stock:number}>();
       await db.batch([
-        db.prepare("INSERT INTO products (id,name,sku,mood,description,image,price,stock,active,featured,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,sku=excluded.sku,mood=excluded.mood,description=excluded.description,image=excluded.image,price=excluded.price,stock=excluded.stock,active=excluded.active,featured=excluded.featured")
-          .bind(id, name, sku, mood, description, image, price, stock, body.active ? 1 : 0, body.featured ? 1 : 0, now),
+        db.prepare("INSERT INTO products (id,name,sku,mood,description,image,price,price_confirmed,stock,stock_confirmed,active,featured,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,sku=excluded.sku,mood=excluded.mood,description=excluded.description,image=excluded.image,price=excluded.price,price_confirmed=excluded.price_confirmed,stock=excluded.stock,stock_confirmed=excluded.stock_confirmed,active=excluded.active,featured=excluded.featured")
+          .bind(id, name, sku, mood, description, image, price, body.priceConfirmed ? 1 : 0, stock, body.stockConfirmed ? 1 : 0, body.active ? 1 : 0, body.featured ? 1 : 0, now),
         ...(stock !== (old?.stock || 0) ? [db.prepare("INSERT INTO inventory_transactions (id,product_id,delta,reason,reference_id,created_at) VALUES (?,?,?,'admin_adjustment',NULL,?)").bind(crypto.randomUUID(), id, stock - (old?.stock || 0), now)] : []),
       ]);
       return json({ ok: true, id });
+    }
+
+    if (action === "settings") {
+      const pickupLocation = cleanString(body.pickupLocation, 300);
+      const contactUrl = cleanString(body.contactUrl, 500);
+      const shippingPolicy = cleanString(body.shippingPolicy, 1500);
+      const returnPolicy = cleanString(body.returnPolicy, 1500);
+      const privacyContact = cleanString(body.privacyContact, 200);
+      if ((body.pickupEnabled && !pickupLocation) || (body.deliveryEnabled && !shippingPolicy) ||
+          (contactUrl && !/^https:\/\//.test(contactUrl))) return json({ error: "Cần địa điểm nhận, thông tin giao hàng và liên kết liên hệ hợp lệ trước khi bật." }, 400);
+      await db.prepare("UPDATE store_settings SET pickup_enabled=?,delivery_enabled=?,pickup_location=?,contact_url=?,shipping_policy=?,return_policy=?,privacy_contact=? WHERE id='main'")
+        .bind(body.pickupEnabled ? 1 : 0, body.deliveryEnabled ? 1 : 0, pickupLocation, contactUrl, shippingPolicy, returnPolicy, privacyContact).run();
+      return json({ ok: true });
     }
 
     if (action === "order_status") {
       const id = cleanString(body.id, 60), status = cleanString(body.status, 30);
       const paymentStatus = cleanString(body.paymentStatus, 30);
       const shippingFee = body.shippingFee === "" || body.shippingFee == null ? null : Number(body.shippingFee);
+      const paidAmount = Number(body.paidAmount ?? 0);
+      const refundedAmount = Number(body.refundedAmount ?? 0);
       if (!statuses.includes(status) || !["pending", "paid", "refunded"].includes(paymentStatus)) return json({ error: "Trạng thái không hợp lệ." }, 400);
       if (shippingFee !== null && (!Number.isInteger(shippingFee) || shippingFee < 0)) return json({ error: "Phí vận chuyển không hợp lệ." }, 400);
-      const old = await db.prepare("SELECT status,voucher_code,subtotal,discount,shipping_fee,payment_status FROM orders WHERE id=?").bind(id).first<{status:string;voucher_code:string|null;subtotal:number;discount:number;shipping_fee:number|null;payment_status:string}>();
+      if (![paidAmount,refundedAmount].every(x => Number.isInteger(x) && x >= 0) || refundedAmount > paidAmount) return json({ error: "Số tiền đã thu hoặc hoàn không hợp lệ." }, 400);
+      const old = await db.prepare("SELECT status,voucher_code,subtotal,discount,shipping_fee,payment_status,paid_amount,refunded_amount,receive_method FROM orders WHERE id=?").bind(id).first<{status:string;voucher_code:string|null;subtotal:number;discount:number;shipping_fee:number|null;payment_status:string;paid_amount:number;refunded_amount:number;receive_method:string}>();
       if (!old) return json({ error: "Không tìm thấy đơn hàng." }, 404);
       if (["cancelled", "refunded"].includes(old.status) && status !== old.status) return json({ error: "Đơn đã hủy hoặc hoàn tiền không thể mở lại." }, 400);
       if (status === "cancelled" && ["shipping", "delivered"].includes(old.status)) return json({ error: "Đơn đã giao vận không thể hủy; hãy xử lý hoàn tiền riêng." }, 400);
       if (!["pending", "cancelled", "refunded"].includes(status) && shippingFee === null) return json({ error: "Hãy xác nhận phí vận chuyển trước khi xử lý đơn (nhập 0 nếu miễn phí)." }, 400);
       if (old.payment_status === "paid" && shippingFee !== old.shipping_fee) return json({ error: "Không thể đổi tổng tiền sau khi đã ghi nhận thanh toán." }, 400);
+      const due = old.subtotal-old.discount+(shippingFee || 0);
+      if (paymentStatus === "paid" && paidAmount < due) return json({ error: "Chỉ đánh dấu đã thanh toán sau khi ghi đủ số tiền thực thu." }, 400);
+      if (status === "delivered" && paymentStatus !== "paid") return json({ error: "Chỉ hoàn tất đơn sau khi đã thu tiền và bàn giao hàng." }, 400);
+      if (status === "cancelled" && old.payment_status === "paid") return json({ error: "Đơn đã thu tiền cần xử lý hoàn tiền riêng." }, 400);
+      if (status === "refunded" && (!paidAmount || !refundedAmount || paymentStatus !== "refunded")) return json({ error: "Cần ghi số tiền hoàn và trạng thái hoàn tiền." }, 400);
       const restock = old.status !== "cancelled" && status === "cancelled";
       const items = restock ? (await db.prepare("SELECT product_id,quantity FROM order_items WHERE order_id=?").bind(id).all<{product_id:string;quantity:number}>()).results : [];
       await db.batch([
-        db.prepare("UPDATE orders SET status=?,payment_status=?,shipping_fee=?,total=?,updated_at=? WHERE id=?").bind(status, paymentStatus, shippingFee, old.subtotal-old.discount+(shippingFee || 0), now, id),
+        db.prepare("UPDATE orders SET status=?,payment_status=?,shipping_fee=?,total=?,paid_amount=?,refunded_amount=?,paid_at=CASE WHEN ?='paid' AND paid_at IS NULL THEN ? ELSE paid_at END,delivered_at=CASE WHEN ?='delivered' AND delivered_at IS NULL THEN ? ELSE delivered_at END,updated_at=? WHERE id=?").bind(status, paymentStatus, shippingFee, due, paidAmount, refundedAmount, paymentStatus, now, status, now, now, id),
+        db.prepare("INSERT INTO order_status_history (id,order_id,old_status,new_status,old_payment_status,new_payment_status,actor,created_at) VALUES (?,?,?,?,?,?,?,?)").bind(crypto.randomUUID(), id, old.status, status, old.payment_status, paymentStatus, request.headers.get("oai-authenticated-user-email") || "admin", now),
         ...(items || []).flatMap(item => [
           db.prepare("UPDATE products SET stock=stock+? WHERE id=?").bind(item.quantity, item.product_id),
           db.prepare("INSERT INTO inventory_transactions (id,product_id,delta,reason,reference_id,created_at) VALUES (?,?,?, 'order_return', ?,?)").bind(crypto.randomUUID(), item.product_id, item.quantity, id, now),
@@ -143,6 +166,7 @@ export async function POST(request: Request) {
       const key = cleanString(body.key, 30), source = cleanString(body.source, 20);
       const target = Number(body.target), actual = Number(body.actual);
       if (!["visits", "revenue", "conversion", "rating"].includes(key) || !["seed", "manual", "auto"].includes(source) ||
+          (key === "conversion" && source === "auto") ||
           !Number.isFinite(target) || !Number.isFinite(actual) || target <= 0 || actual < 0 ||
           ((key === "rating" && (target > 5 || actual > 5)) || (key === "conversion" && (target > 100 || actual > 100)))) return json({ error: "KPI không hợp lệ." }, 400);
       const previous = await db.prepare("SELECT target,actual,source FROM kpis WHERE key=?").bind(key).first<{target:number;actual:number;source:string}>();
