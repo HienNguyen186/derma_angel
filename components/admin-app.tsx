@@ -22,7 +22,7 @@ const emptyProduct = { id:"",name:"",sku:"",mood:"",description:"",image:"/produ
 const emptyVoucher = { code:"",kind:"fixed",amount:0,minSubtotal:0,maxUses:"",startsAt:"",endsAt:"",active:false };
 const emptyReport = { month:"2026-11",channel:"Shopee Mall",units:0,revenue:0,marketingCost:0,promotionCost:0,note:"" };
 
-export function AdminApp({ email }: { email: string }) {
+export function AdminApp({ email, native = false }: { email: string; native?: boolean }) {
   const [tab, setTab] = useState("overview");
   const [data, setData] = useState<Data | null>(null);
   const [error, setError] = useState("");
@@ -79,7 +79,7 @@ export function AdminApp({ email }: { email: string }) {
   const referenceCogs = campaignUnits * 22050, grossProfit = campaignRevenue - referenceCogs;
 
   return <div className="admin-shell">
-    <aside className={`admin-sidebar ${menu ? "open" : ""}`}><div className="admin-brand"><img src="/dermaangel-logo.png" alt="DermaAngel"/><small>BUSINESS ADMIN</small></div><div className="admin-side-label">WORKSPACE</div><nav>{nav.map(([id,label,Icon]) => <button key={id} className={tab === id ? "active" : ""} onClick={() => {setTab(id);setMenu(false);}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-side-bottom"><ShieldCheck size={18}/><span>Đăng nhập với tài khoản quản trị<br/><b>{email}</b></span></div><a className="back-store" href="/"><ArrowLeft size={16}/> Về cửa hàng</a></aside>
+    <aside className={`admin-sidebar ${menu ? "open" : ""}`}><div className="admin-brand"><img src="/dermaangel-logo.png" alt="DermaAngel"/><small>BUSINESS ADMIN</small></div><div className="admin-side-label">WORKSPACE</div><nav>{nav.map(([id,label,Icon]) => <button key={id} className={tab === id ? "active" : ""} onClick={() => {setTab(id);setMenu(false);}}><Icon size={18}/>{label}</button>)}</nav><div className="admin-side-bottom"><ShieldCheck size={18}/><span>Đăng nhập với tài khoản quản trị<br/><b>{email}</b></span></div>{native && <form method="post" action="/admin/logout"><button className="back-store" type="submit">Đăng xuất</button></form>}<a className="back-store" href="/"><ArrowLeft size={16}/> Về cửa hàng</a></aside>
     <div className="admin-main"><header className="admin-header"><div><button className="admin-menu" onClick={() => setMenu(!menu)} aria-label="Menu"><Menu/></button><span>DERMAANGEL / {nav.find(x=>x[0]===tab)?.[1]}</span></div><div><span className="admin-live-dot"/> Dữ liệu hệ thống <button onClick={load} title="Tải lại"><RefreshCw size={17}/></button></div></header>
     <main className="admin-content">
       <div className="admin-title"><div><span className="admin-kicker">MOOD IN THE CLOUDS · OPERATIONS</span><h1>{nav.find(x=>x[0]===tab)?.[1]}</h1><p>{tab === "campaign" ? "Tổng hợp mục tiêu và kết quả từ website cùng các kênh khác, theo nguồn riêng." : tab === "kpis" ? "Mục tiêu website và nguồn kết quả được quản lý độc lập với chiến dịch." : "Điều hành cửa hàng bằng dữ liệu đã ghi nhận và cấu hình thực tế."}</p></div><div className="admin-title-symbol">✦</div></div>

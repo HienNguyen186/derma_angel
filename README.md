@@ -59,7 +59,7 @@ npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js deploy --config wrangler.cloudflare.jsonc
 ```
 
-Cloudflare Workers không tự cung cấp các header đăng nhập của Sites. Worker loại bỏ header giả do khách gửi. `/admin` và `/api/admin` chỉ mở sau khi cấu hình Cloudflare Access cho các đường dẫn này, đặt `ACCESS_TEAM_DOMAIN`, `ACCESS_POLICY_AUD` và secret `ADMIN_EMAILS` (danh sách email cách nhau bằng dấu phẩy). Worker xác thực chữ ký JWT của Access và đối chiếu email; thiếu cấu hình thì trả 403. Cần bảo vệ cả `/admin*` và `/api/admin*` trong Cloudflare Access. Không dùng chính sách Access cho toàn Worker vì cửa hàng phải công khai.
+Cloudflare Workers không tự cung cấp các header đăng nhập của Sites. Worker loại bỏ header giả do khách gửi. Admin đăng nhập tại `/admin/login` bằng email và mật khẩu riêng. Bản chạy thật cần ba secret: `ADMIN_EMAILS` (danh sách email cách nhau bằng dấu phẩy), `ADMIN_PASSWORD_HASHES` (JSON ánh xạ email sang SHA-256 của mật khẩu ngẫu nhiên dài, mã hóa base64url) và `ADMIN_SESSION_KEY` (khóa HMAC ngẫu nhiên 32 byte, mã hóa base64url). Không commit mật khẩu hoặc các secret vào repo. Phiên đăng nhập có cookie HttpOnly, Secure, SameSite=Lax, hết hạn sau 12 giờ; các yêu cầu ghi dữ liệu Admin phải có Origin cùng website. Đăng xuất trong thanh bên Admin.
 
 Tài khoản Cloudflare hiện chưa bật R2. Không khai báo `BUCKET` trong bản Workers, nên chức năng tải ảnh từ Admin báo chưa cấu hình. Các ảnh sản phẩm gốc trong `public/` vẫn hiển thị. D1 của Workers mới không tự sao chép dữ liệu từ Sites; sản phẩm và KPI khởi tạo được tạo ở lần truy cập đầu. Admin cần xác nhận giá và tồn kho trước khi mở nhận đơn.
 
