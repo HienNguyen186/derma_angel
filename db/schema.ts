@@ -46,10 +46,11 @@ export const vouchers = sqliteTable("vouchers", {
 }, (table) => [check("vouchers_uses_within_limit", sql`${table.maxUses} IS NULL OR ${table.usedCount} <= ${table.maxUses}`)]);
 
 export const reviews = sqliteTable("reviews", {
-  id: text("id").primaryKey(), orderId: text("order_id").notNull().references(() => orders.id), productId: text("product_id").notNull().references(() => products.id),
+  id: text("id").primaryKey(), orderId: text("order_id").references(() => orders.id), productId: text("product_id").notNull().references(() => products.id),
   rating: integer("rating").notNull(), body: text("body").notNull(), displayName: text("display_name").notNull(), phone: text("phone").notNull(),
   status: text("status").notNull().default("pending"), createdAt: text("created_at").notNull(),
   consentPublic: integer("consent_public", { mode: "boolean" }).notNull().default(false),
+  source: text("source").notNull().default("website_order"), requestKey: text("request_key").unique(),
 }, (table) => [uniqueIndex("reviews_order_unique").on(table.orderId)]);
 
 export const storeSettings = sqliteTable("store_settings", {

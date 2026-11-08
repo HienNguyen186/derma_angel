@@ -383,6 +383,14 @@
 .review-stars label { display: flex; align-items: center; gap: 4px; font-weight: 500; white-space: nowrap; }
 .review-stars input { accent-color: var(--da-purple); }
 .public-review-form > button { justify-self: start; }
+.review-source { border: 0; padding: 0; margin: 0; display: grid; gap: 7px; }
+.review-source legend { color: var(--da-ink); font-size: .8rem; font-weight: 700; margin-bottom: 6px; }
+.review-source label { display: flex; flex-direction: row; align-items: center; gap: 7px; font-weight: 500; }
+.review-source input { accent-color: var(--da-purple); }
+.public-review-form .review-hint { font-size: .76rem; line-height: 1.5; }
+.public-review-form .review-feedback { border-radius: 10px; padding: 11px 13px; font-size: .8rem; line-height: 1.5; }
+.public-review-form .review-feedback.error { color: #8c2e46; background: #fff0f3; }
+.public-review-form .review-feedback.success { color: #186b53; background: #e5f9f0; }
 .faq-section { background: #fff; }
 .faq-list { display: grid; gap: 10px; max-width: 900px; }
 .faq-list details { padding: 0 22px; }

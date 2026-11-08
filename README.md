@@ -15,7 +15,7 @@ Giá 63.000 ₫/hộp trong tài liệu là **giá tham khảo**, không đượ
 
 Đơn mới là **yêu cầu đặt hàng**. Backend tính lại giá, kiểm tra tồn và voucher, chống gửi trùng bằng `requestKey`, rồi giữ số lượng trong một giao dịch D1. Đội Form V xác nhận phí giao, cách thanh toán và bàn giao hàng thủ công. Doanh thu website chỉ tính đơn đã thanh toán và giao xong, trừ giảm giá và tiền hoàn; không tính phí giao.
 
-Khách đánh giá bằng mã đơn + số điện thoại sau khi đơn đã thanh toán và giao xong. Mỗi đơn tối đa một đánh giá, chọn 1–5 sao, có thể nhập nhận xét và phải đồng ý công khai tên hiển thị. Admin duyệt trước khi đánh giá xuất hiện; số sao trung bình chỉ lấy đánh giá đã duyệt. Số điện thoại không nằm trong nội dung đánh giá công khai.
+Khách mua trực tiếp hoặc qua kênh khác có thể đánh giá không cần mã đơn. Đánh giá này được gắn nhãn **khách gửi trực tiếp, chưa đối chiếu đơn**. Khách đặt qua website có thể đánh giá bằng mã đơn + số điện thoại sau khi đơn đã thanh toán và giao xong; mỗi đơn tối đa một đánh giá. Cả hai luồng đều cần tên hiển thị, 1–5 sao, đồng ý công khai và Admin duyệt trước khi xuất hiện. Số sao trung bình chỉ lấy đánh giá đã duyệt. Số điện thoại không nằm trong đánh giá công khai.
 
 Admin có thể chuẩn bị voucher giảm tiền hoặc giảm phần trăm với giá trị đơn tối thiểu, số lượt và thời hạn. Storefront chỉ hiện ưu đãi đang có hiệu lực. Các combo và quà tặng chưa có quy tắc, giá và tồn được duyệt nên chưa được kích hoạt.
 
@@ -23,7 +23,7 @@ Admin có thể chuẩn bị voucher giảm tiền hoặc giảm phần trăm v�
 
 - KPI website tách khỏi KPI toàn chiến dịch và các báo cáo kênh khác.
 - Các số **120 lượt truy cập, 600.000 ₫, 7%, 4,0 sao** là tham chiếu khởi tạo trong ảnh BTC, **không phải kết quả của Form V**. Admin gắn nhãn nguồn `seed` và có thể sửa mục tiêu, nguồn, minh chứng.
-- Lượt truy cập đo từ người đồng ý ghi nhận; doanh thu từ đơn đã thanh toán và giao xong; điểm sao từ đánh giá đã duyệt. Tỷ lệ chuyển đổi online sang mua trực tiếp chưa có dữ liệu đối soát nên không tự tính từ lượt truy cập và đơn.
+- Lượt truy cập nội bộ đếm một phiên trình duyệt mỗi ngày sau khi khách đồng ý, có cơ chế gửi lại khi sự kiện thất bại. Đây là số phiên có đồng ý, chưa phải số phiên toàn website trong công cụ analytics độc lập. Doanh thu từ đơn đã thanh toán và giao xong; điểm sao từ đánh giá đã duyệt. Tỷ lệ chuyển đổi online sang mua trực tiếp chưa có dữ liệu đối soát nên không tự tính từ lượt truy cập và đơn.
 - Mục tiêu chiến dịch 90.000 hộp / 5,67 tỷ ₫ cho 11/2026–01/2027 nằm ở phần chiến dịch riêng. Kết quả các kênh khác cần Admin nhập báo cáo; website không tự nhận toàn bộ doanh số chiến dịch.
 
 ## Chạy cục bộ
@@ -42,6 +42,7 @@ npm run build
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0000_unusual_dark_beast.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0001_amused_gargoyle.sql
 node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0002_dark_white_queen.sql
+node --import ./scripts/sites-env.mjs ./node_modules/wrangler/bin/wrangler.js d1 execute DB --local --config dist/server/wrangler.json --persist-to .wrangler/state --file drizzle/0003_slippery_colonel_america.sql
 npm run dev
 ```
 

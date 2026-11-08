@@ -12,7 +12,7 @@ async function dashboard() {
     db.prepare("SELECT * FROM kpis ORDER BY CASE key WHEN 'visits' THEN 1 WHEN 'revenue' THEN 2 WHEN 'conversion' THEN 3 ELSE 4 END").all(),
     db.prepare("SELECT * FROM evidence ORDER BY created_at DESC LIMIT 100").all(),
     db.prepare("SELECT * FROM vouchers ORDER BY code").all(),
-    db.prepare("SELECT r.id,r.order_id,r.product_id,r.rating,r.body,r.display_name,r.status,r.created_at,p.name product_name FROM reviews r JOIN products p ON p.id=r.product_id ORDER BY r.created_at DESC LIMIT 100").all(),
+    db.prepare("SELECT r.id,r.order_id,r.product_id,r.rating,r.body,r.display_name,r.source,r.status,r.created_at,p.name product_name FROM reviews r JOIN products p ON p.id=r.product_id ORDER BY r.created_at DESC LIMIT 100").all(),
     db.prepare("SELECT * FROM channel_reports ORDER BY month DESC,channel").all(),
     db.prepare("SELECT * FROM campaigns ORDER BY starts_at DESC").all(),
     db.prepare("SELECT t.*,p.name product_name FROM inventory_transactions t JOIN products p ON p.id=t.product_id ORDER BY t.created_at DESC LIMIT 100").all(),
