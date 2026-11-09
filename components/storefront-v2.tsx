@@ -265,7 +265,7 @@ export function Storefront() {
             <h1>Dán đúng <em>Mood,</em><br/>Diện đúng <em>Mốt.</em></h1>
             <p>Miếng dán mụn DermaAngel — 5 thiết kế, 5 cách thể hiện cá tính. Chăm sóc bản thân theo cách mình yêu thích.</p>
             <div className="hero-buttons"><a className="button button-primary" href="#collection">Khám phá bộ sưu tập <ArrowRight size={17}/></a><a className="button button-light" href="#mood">Chọn mood của bạn</a></div>
-            <div className="hero-foot"><span><i/> 5 thiết kế</span><span><i/> Giá tham chiếu 63.000 đ/hộp · chờ xác nhận</span></div>
+            <div className="hero-foot"><span><i/> 5 thiết kế</span></div>
           </div>
           <div className="hero-visual"><div className="hero-ring"/><img src="/products-hero.png" alt="Năm bao bì gốc DermaAngel: Glitter, Panda, Cute Paws, Hologram và Kitties" width="1383" height="922" fetchPriority="high"/><span className="hero-sticker">your skin<br/><b>your mood</b><small>✧</small></span></div>
         </div>
