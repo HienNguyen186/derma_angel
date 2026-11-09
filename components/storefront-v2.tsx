@@ -58,11 +58,11 @@ export function Storefront() {
   const [tracked, setTracked] = useState<Order | null>(null);
   const [trackCode, setTrackCode] = useState("");
   const [trackPhone, setTrackPhone] = useState("");
-  const [consent, setConsent] = useState<boolean | null>(null);
   const [mobileMenu, setMobileMenu] = useState(false);
   const requestKey = useRef("");
   const reviewRequestKey = useRef("");
   const previousFocus = useRef<HTMLElement | null>(null);
+  const pageViewId = useRef<string | null>(null);
 
   async function refreshCatalog() {
     try {
@@ -84,8 +84,6 @@ export function Storefront() {
   useEffect(() => {
     try { setCart(JSON.parse(localStorage.getItem("da-cart") || "[]")); } catch { setCart([]); }
     try { setFavorites(JSON.parse(localStorage.getItem("da-favorites") || "[]")); } catch { setFavorites([]); }
-    const saved = localStorage.getItem("da-analytics-consent");
-    setConsent(saved === null ? null : saved === "yes");
     void refreshCatalog();
   }, []);
   useEffect(() => { localStorage.setItem("da-cart", JSON.stringify(cart)); }, [cart]);
@@ -96,20 +94,16 @@ export function Storefront() {
     if (product) void openDetail(product, false);
   }, [products]);
   useEffect(() => {
-    if (!consent) return;
     let inFlight = false;
+    let recorded = false;
     async function recordVisit() {
-      if (document.visibilityState === "hidden" || inFlight) return;
-      const day = new Intl.DateTimeFormat("sv-SE", { timeZone: "Asia/Bangkok", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
-      const key = "da-visit-recorded-" + day;
-      if (sessionStorage.getItem(key)) return;
-      let sessionId = sessionStorage.getItem("da-session-id");
-      if (!sessionId) { sessionId = crypto.randomUUID(); sessionStorage.setItem("da-session-id", sessionId); }
+      if (document.visibilityState === "hidden" || inFlight || recorded) return;
+      if (!pageViewId.current) pageViewId.current = crypto.randomUUID();
       inFlight = true;
       try {
-        const response = await fetch("/api/visit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: location.pathname, consent: true, sessionId }) });
+        const response = await fetch("/api/visit", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pageViewId: pageViewId.current }) });
         const data: any = await response.json();
-        if (response.ok && data.recorded) sessionStorage.setItem(key, "1");
+        if (response.ok && data.recorded) recorded = true;
       } catch { /* Retry when the page becomes active again. */ }
       finally { inFlight = false; }
     }
@@ -117,7 +111,7 @@ export function Storefront() {
     window.addEventListener("focus", recordVisit);
     document.addEventListener("visibilitychange", recordVisit);
     return () => { window.removeEventListener("focus", recordVisit); document.removeEventListener("visibilitychange", recordVisit); };
-  }, [consent]);
+  }, []);
   useEffect(() => {
     if (!selected && !drawer && !policy && !success) return;
     previousFocus.current = document.activeElement as HTMLElement;
@@ -235,7 +229,6 @@ export function Storefront() {
     } catch (error) { setReviewError(error instanceof Error ? error.message : "Chưa gửi được đánh giá. Bạn thử lại nhé."); }
     finally { setReviewSubmitting(false); }
   }
-  function setAnalytics(value: boolean) { localStorage.setItem("da-analytics-consent", value ? "yes" : "no"); setConsent(value); }
 
   return <div className="site-shell">
     <div className="announcement"><Sparkles size={14}/> DÁN ĐÚNG MOOD, DIỆN ĐÚNG MỐT <span>✦</span> 5 THIẾT KẾ ĐỂ LÀ CHÍNH MÌNH</div>
@@ -331,10 +324,9 @@ export function Storefront() {
       <section className="social-section" id="contact"><div className="container social-layout"><div><span className="kicker">CONNECT WITH FORM V</span><h2>Kết nối cùng <em>Form V</em></h2><p>Bạn cần hỏi về thiết kế, tình trạng hàng hoặc cách nhận hàng? Nhắn cho chúng mình nhé.</p><p>Fanpage <a href={formVPage} target="_blank" rel="noreferrer">Form V</a>: cập nhật và hỗ trợ khách hàng.</p><p>Fanpage <a href={dermaAngelPage} target="_blank" rel="noreferrer">DermaAngel</a>: thông tin thương hiệu.</p><p><b>Email:</b> <a href="mailto:dermaangelfromv@gmail.com">dermaangelfromv@gmail.com</a><br/><b>Hotline:</b> <a href="tel:+84835755880">083 575 5880</a><br/><b>Điểm bán:</b> Trường Đại học Ngân hàng<br/><b>Thời gian hoạt động:</b> 9:00 - 16:00</p></div><div className="social-actions"><a className="button button-primary" href={formVPage} target="_blank" rel="noreferrer">Fanpage Form V <ArrowRight size={17}/></a><a className="button button-light" href={dermaAngelPage} target="_blank" rel="noreferrer">Fanpage DermaAngel</a><a className="button button-light" href="mailto:dermaangelfromv@gmail.com">Email Form V</a></div></div></section>
     </main>
 
-    <footer className="footer"><div className="container footer-grid"><div><img src="/dermaangel-logo.png" alt="DermaAngel" width="1086" height="362"/><p>Dán đúng Mood, Diện đúng Mốt.</p></div><div><b>Khám phá</b><a href="#collection">Bộ sưu tập</a><a href="#mood">Chọn mood</a><a href="#reviews">Đánh giá</a></div><div><b>Hỗ trợ</b><button onClick={() => setDrawer("track")}>Tra cứu đơn hàng</button><button onClick={() => setPolicy("purchase")}>Chính sách mua hàng</button><button onClick={() => setPolicy("privacy")}>Thông tin bảo mật</button><button onClick={() => setConsent(null)}>Cài đặt đo lượt truy cập</button></div><div><b>Kết nối</b><a href={formVPage} target="_blank" rel="noreferrer">Fanpage Form V</a><a href={dermaAngelPage} target="_blank" rel="noreferrer">Fanpage DermaAngel</a><a href="mailto:dermaangelfromv@gmail.com">Email: dermaangelfromv@gmail.com</a><a href="tel:+84835755880">Hotline: 083 575 5880</a><span>Điểm bán: Trường Đại học Ngân hàng</span><span>Thời gian hoạt động: 9:00 - 16:00</span><a href="#home">Về đầu trang ↑</a></div></div><div className="container footer-bottom"><span>© 2026 DermaAngel · Form V.</span><span>Made for every mood ✦</span></div></footer>
+    <footer className="footer"><div className="container footer-grid"><div><img src="/dermaangel-logo.png" alt="DermaAngel" width="1086" height="362"/><p>Dán đúng Mood, Diện đúng Mốt.</p></div><div><b>Khám phá</b><a href="#collection">Bộ sưu tập</a><a href="#mood">Chọn mood</a><a href="#reviews">Đánh giá</a></div><div><b>Hỗ trợ</b><button onClick={() => setDrawer("track")}>Tra cứu đơn hàng</button><button onClick={() => setPolicy("purchase")}>Chính sách mua hàng</button><button onClick={() => setPolicy("privacy")}>Thông tin bảo mật</button></div><div><b>Kết nối</b><a href={formVPage} target="_blank" rel="noreferrer">Fanpage Form V</a><a href={dermaAngelPage} target="_blank" rel="noreferrer">Fanpage DermaAngel</a><a href="mailto:dermaangelfromv@gmail.com">Email: dermaangelfromv@gmail.com</a><a href="tel:+84835755880">Hotline: 083 575 5880</a><span>Điểm bán: Trường Đại học Ngân hàng</span><span>Thời gian hoạt động: 9:00 - 16:00</span><a href="#home">Về đầu trang ↑</a></div></div><div className="container footer-bottom"><span>© 2026 DermaAngel · Form V.</span><span>Made for every mood ✦</span></div></footer>
 
     {notice && <div className="toast" role="status"><span>{notice}</span><button onClick={() => setNotice("")} aria-label="Đóng thông báo"><X size={16}/></button></div>}
-    {consent === null && <div className="consent-banner"><div><b>Quyền riêng tư của bạn</b><p>Chúng mình chỉ ghi nhận lượt truy cập nội bộ khi bạn đồng ý. Không có công cụ quảng cáo nào được bật ở đây.</p></div><div><button onClick={() => setAnalytics(false)}>Từ chối</button><button className="button-primary" onClick={() => setAnalytics(true)}>Đồng ý</button></div></div>}
 
     {selected && <div className="modal-backdrop" onMouseDown={closeDetail}><div className="detail-modal" role="dialog" aria-modal="true" aria-label={"Chi tiết " + selected.name} onMouseDown={event => event.stopPropagation()}><button className="close" onClick={closeDetail} aria-label="Đóng"><X/></button><div className={"detail-art tone-" + selected.id}><ProductArt product={selected} large/><small>Ảnh bao bì gốc</small></div><div className="detail-content"><span className="kicker">DERMAANGEL / {selected.sku}</span><h2>DermaAngel Acne Beauty Patch <em>{selected.name}</em></h2><p className="detail-price">{selected.price_confirmed ? money(selected.price) + "/hộp" : "Giá chờ xác nhận"}</p><div className="detail-meta"><span><Star size={16}/>{selected.rating ? selected.rating + "/5 · " + selected.review_count + " đánh giá" : "Chưa có đánh giá"}</span><span>{stockLabel(selected)}</span></div><p>{selected.description}</p><div className="detail-note"><b>Thiết kế</b><span>{selected.mood}</span></div><div className="detail-note"><b>Quy cách và thông tin sản phẩm</b><span>Vui lòng đối chiếu thông tin chính thức trên bao bì trước khi sử dụng.</span></div><div className="detail-note"><b>Hướng dẫn sử dụng và lưu ý</b><span>Đội đang chờ tài liệu sản phẩm được xác nhận. Vui lòng đọc hướng dẫn và lưu ý trên bao bì.</span></div><div className="detail-buy"><div className="quantity-stepper"><button onClick={() => setDetailQuantity(Math.max(1,detailQuantity-1))} aria-label="Giảm số lượng"><Minus size={16}/></button><span>{detailQuantity}</span><button onClick={() => setDetailQuantity(Math.min(selected.stock,detailQuantity+1))} aria-label="Tăng số lượng" disabled={!canBuy(selected)}><Plus size={16}/></button></div>{canBuy(selected) ? <button className="button button-primary" onClick={() => { add(selected,detailQuantity); closeDetail(); }}>Thêm vào giỏ <ShoppingBag size={17}/></button> : <button className="button button-light" onClick={() => { closeDetail(); document.getElementById("contact")?.scrollIntoView({behavior:"smooth"}); }}>Hỏi tình trạng hàng</button>}</div><div className="detail-reviews"><b>Đánh giá đã duyệt</b>{detailReviews.length ? detailReviews.map(review => <div key={review.id}><span>{"★".repeat(review.rating)} · {review.display_name} · {review.source === "direct" ? "Khách gửi trực tiếp" : "Đã đối chiếu đơn website"}</span>{review.body && <p>{review.body}</p>}</div>) : <p>Chưa có đánh giá.</p>}</div></div></div></div>}
 
@@ -344,7 +336,7 @@ export function Storefront() {
       {drawer === "track" && <div className="drawer-body"><p className="checkout-intro">Nhập mã đơn và số điện thoại đã dùng khi gửi yêu cầu.</p><form className="track-form" onSubmit={track}><label>Mã đơn hàng<input required value={trackCode} onChange={event => setTrackCode(event.target.value)} placeholder="DA-..."/></label><label>Số điện thoại<input required inputMode="tel" value={trackPhone} onChange={event => setTrackPhone(event.target.value)} placeholder="0..."/></label><button className="button button-primary full">Tra cứu đơn hàng</button></form>{tracked && <div className="tracked-order"><span className="status-pill">{tracked.status}</span><h3>{tracked.code}</h3><p>{tracked.customer_name} · {tracked.receive_method === "pickup" ? "Nhận tại điểm bán" : "Giao hàng"}</p><div className="totals"><div><span>Thanh toán</span><b>{tracked.payment_status}</b></div><div><span>Tổng dự kiến</span><b>{money(tracked.total)}</b></div><div><span>Phí giao</span><b>{tracked.shipping_fee == null ? "Chờ xác nhận" : money(tracked.shipping_fee)}</b></div></div>{tracked.items?.map((item:any) => <div className="tracked-item" key={item.product_id}>{item.name} × {item.quantity} <b>{money(item.price * item.quantity)}</b></div>)}{tracked.status === "delivered" && tracked.payment_status === "paid" && <button className="button button-light full" onClick={() => {setReviewDraft({...blankReview,source:"website_order",code:trackCode,phone:trackPhone,productId:tracked.items?.[0]?.product_id || ""});setDrawer(null);document.getElementById("reviews")?.scrollIntoView({behavior:"smooth"});}}>Viết đánh giá</button>}</div>}</div>}
     </aside></div>}
 
-    {policy && <div className="modal-backdrop" onMouseDown={() => setPolicy(null)}><div className="policy-modal" role="dialog" aria-modal="true" aria-label={policy === "purchase" ? "Chính sách mua hàng" : "Thông tin bảo mật"} onMouseDown={event => event.stopPropagation()}><button className="close" onClick={() => setPolicy(null)} aria-label="Đóng"><X/></button>{policy === "purchase" ? <><h2>Chính sách mua hàng</h2><p>Form V tiếp nhận yêu cầu đặt hàng. Đội sẽ liên hệ để xác nhận sản phẩm, số lượng, tổng tiền và phương thức nhận hàng trước khi hoàn tất đơn.</p><h3>Nhận hàng</h3><p>{settings.shipping_policy || "Điểm nhận, lịch nhận, khu vực giao, thời gian và phí giao hàng đang chờ Form V xác nhận."}</p><h3>Thanh toán</h3><p>Yêu cầu gửi trên website chưa phải xác nhận thanh toán. Form V sẽ thông báo phương thức và thời điểm thanh toán sau khi kiểm tra đơn.</p><h3>Đổi trả và hủy đơn</h3><p>{settings.return_policy || "Điều kiện đổi trả và hủy đơn đang được Form V cập nhật. Vui lòng liên hệ trước khi gửi yêu cầu."}</p></> : <><h2>Thông tin bảo mật</h2><p>Form V tiếp nhận họ tên, số điện thoại và các thông tin bạn chủ động cung cấp để xác nhận đơn, hỗ trợ nhận hàng và xử lý yêu cầu liên quan.</p><p>Thông tin liên hệ của bạn không được hiển thị công khai trên website. Nếu bạn gửi đánh giá và đồng ý công khai, website hiển thị tên bạn chọn, điểm và nội dung đánh giá.</p><p>{settings.privacy_contact ? "Liên hệ về dữ liệu: " + settings.privacy_contact : "Thông tin về thời gian lưu giữ, bên tiếp nhận dữ liệu và kênh yêu cầu sửa hoặc xóa đang chờ Form V công bố."}</p></>}<button className="button button-primary" onClick={() => setPolicy(null)}>Đóng</button></div></div>}
+    {policy && <div className="modal-backdrop" onMouseDown={() => setPolicy(null)}><div className="policy-modal" role="dialog" aria-modal="true" aria-label={policy === "purchase" ? "Chính sách mua hàng" : "Thông tin bảo mật"} onMouseDown={event => event.stopPropagation()}><button className="close" onClick={() => setPolicy(null)} aria-label="Đóng"><X/></button>{policy === "purchase" ? <><h2>Chính sách mua hàng</h2><p>Form V tiếp nhận yêu cầu đặt hàng. Đội sẽ liên hệ để xác nhận sản phẩm, số lượng, tổng tiền và phương thức nhận hàng trước khi hoàn tất đơn.</p><h3>Nhận hàng</h3><p>{settings.shipping_policy || "Điểm nhận, lịch nhận, khu vực giao, thời gian và phí giao hàng đang chờ Form V xác nhận."}</p><h3>Thanh toán</h3><p>Yêu cầu gửi trên website chưa phải xác nhận thanh toán. Form V sẽ thông báo phương thức và thời điểm thanh toán sau khi kiểm tra đơn.</p><h3>Đổi trả và hủy đơn</h3><p>{settings.return_policy || "Điều kiện đổi trả và hủy đơn đang được Form V cập nhật. Vui lòng liên hệ trước khi gửi yêu cầu."}</p></> : <><h2>Thông tin bảo mật</h2><p>Form V tiếp nhận họ tên, số điện thoại và các thông tin bạn chủ động cung cấp để xác nhận đơn, hỗ trợ nhận hàng và xử lý yêu cầu liên quan.</p><p>Thông tin liên hệ của bạn không được hiển thị công khai trên website. Nếu bạn gửi đánh giá và đồng ý công khai, website hiển thị tên bạn chọn, điểm và nội dung đánh giá.</p><p>Website tự đếm tổng lượt mở trang để theo dõi hoạt động. Cơ sở dữ liệu lưu mã ngẫu nhiên cho từng lượt mở trang, thời điểm và đường dẫn; không lưu địa chỉ IP, cookie analytics hay mã nhận diện trình duyệt lâu dài. Một người tải lại trang có thể được tính thêm lượt.</p><p>{settings.privacy_contact ? "Liên hệ về dữ liệu: " + settings.privacy_contact : "Thông tin về thời gian lưu giữ, bên tiếp nhận dữ liệu và kênh yêu cầu sửa hoặc xóa đang chờ Form V công bố."}</p></>}<button className="button button-primary" onClick={() => setPolicy(null)}>Đóng</button></div></div>}
 
     {success && <div className="modal-backdrop"><div className="success-card" role="dialog" aria-modal="true"><div className="success-icon"><Check size={32}/></div><span className="kicker">FORM V RECEIVED YOUR REQUEST</span><h2>Form V đã nhận yêu cầu đặt hàng của bạn!</h2><p>Vui lòng giữ mã này để đối chiếu khi nhận hàng. Đội sẽ liên hệ để xác nhận sản phẩm, tổng tiền và thời gian nhận.</p><div className="success-code">Mã yêu cầu <b>{success.code}</b></div><small>Yêu cầu đặt hàng chưa phải xác nhận thanh toán.</small><button className="button button-primary full" onClick={async () => {await navigator.clipboard.writeText(success.code);setNotice("Đã sao chép mã yêu cầu.");}}>Sao chép mã</button><button className="back-link" onClick={() => setSuccess(null)}>Tiếp tục khám phá</button></div></div>}
   </div>;

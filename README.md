@@ -23,7 +23,7 @@ Admin có thể chuẩn bị voucher giảm tiền hoặc giảm phần trăm v�
 
 - KPI website tách khỏi KPI toàn chiến dịch và các báo cáo kênh khác.
 - Các số **120 lượt truy cập, 600.000 ₫, 7%, 4,0 sao** là tham chiếu khởi tạo trong ảnh BTC, **không phải kết quả của Form V**. Admin gắn nhãn nguồn `seed` và có thể sửa mục tiêu, nguồn, minh chứng.
-- Lượt truy cập nội bộ đếm một phiên trình duyệt mỗi ngày sau khi khách đồng ý, có cơ chế gửi lại khi sự kiện thất bại. Đây là số phiên có đồng ý, chưa phải số phiên toàn website trong công cụ analytics độc lập. Doanh thu từ đơn đã thanh toán và giao xong; điểm sao từ đánh giá đã duyệt. Tỷ lệ chuyển đổi online sang mua trực tiếp chưa có dữ liệu đối soát nên không tự tính từ lượt truy cập và đơn.
+- Website tự ghi nhận một lượt mở trang sau khi giao diện được tải. D1 chỉ lưu ID ngẫu nhiên dùng cho lần gửi và gửi lại của chính lượt đó, đường dẫn `/` và thời điểm; không lưu IP, cookie analytics hay mã nhận diện trình duyệt. Tải lại trang có thể tăng số lượt; không suy ra số khách duy nhất. Ba phiên có đồng ý từ cách đếm cũ vẫn giữ trong D1 nhưng không cộng vào chỉ số mới. Doanh thu từ đơn đã thanh toán và giao xong; điểm sao từ đánh giá đã duyệt. Tỷ lệ chuyển đổi online sang mua trực tiếp chưa có dữ liệu đối soát nên không tự tính từ lượt mở trang và đơn.
 - Mục tiêu chiến dịch 90.000 hộp / 5,67 tỷ ₫ cho 11/2026–01/2027 nằm ở phần chiến dịch riêng. Kết quả các kênh khác cần Admin nhập báo cáo; website không tự nhận toàn bộ doanh số chiến dịch.
 
 ## Chạy cục bộ
@@ -67,6 +67,6 @@ Tài khoản Cloudflare hiện chưa bật R2. Không khai báo `BUCKET` trong b
 
 `.openai/hosting.json` khai báo Sites project, D1 `DB` và R2 `BUCKET`. Sites áp dụng migration đã commit trước khi phát hành Worker. Cần cấu hình secret `ADMIN_EMAILS` cho bản chạy thật và giữ bản phát hành riêng tư cho đến khi đủ dữ liệu vận hành.
 
-Cần Form V cung cấp hoặc xác nhận giá bán, số lượng từng mẫu, điểm và lịch nhận, khu vực/phí giao, kênh liên hệ, hướng dẫn sản phẩm, điều kiện đổi trả, nội dung bảo mật và chi tiết thanh toán. UI thể hiện phần chưa được xác nhận; không tự điền thông tin kinh doanh. Chưa tích hợp VNPay/MoMo, GA4, Meta Pixel, đồng bộ sàn hay đơn vị vận chuyển. Ghi nhận lượt truy cập nội bộ chỉ sau khi khách đồng ý. Admin cần cấu hình sao lưu D1/R2 trước khi vận hành công khai.
+Cần Form V cung cấp hoặc xác nhận giá bán, số lượng từng mẫu, điểm và lịch nhận, khu vực/phí giao, kênh liên hệ, hướng dẫn sản phẩm, điều kiện đổi trả, nội dung bảo mật và chi tiết thanh toán. UI thể hiện phần chưa được xác nhận; không tự điền thông tin kinh doanh. Chưa tích hợp VNPay/MoMo, GA4, Meta Pixel, đồng bộ sàn hay đơn vị vận chuyển. Cách đếm tổng lượt mở trang được mô tả trong mục Thông tin bảo mật, không có hộp thông báo bật lên. Admin cần cấu hình sao lưu D1/R2 trước khi vận hành công khai.
 
 Xem [hợp đồng API](docs/API.md) để tích hợp và kiểm tra.
