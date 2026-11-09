@@ -233,7 +233,7 @@ export function Storefront() {
   return <div className="site-shell">
     <div className="announcement"><Sparkles size={14}/> DÁN ĐÚNG MOOD, DIỆN ĐÚNG MỐT <span>✦</span> 5 THIẾT KẾ ĐỂ LÀ CHÍNH MÌNH</div>
     <header className="store-header">
-      <a href="#home" className="brand"><img src="/dermaangel-logo.png" alt="DermaAngel" width="1086" height="362"/></a>
+      <a href="#home" className="brand"><img src="/form-v-logo.jpg" alt="Form V" width="2172" height="724"/></a>
       <nav className={mobileMenu ? "nav-open" : ""} aria-label="Điều hướng chính">
         <a href="#home" onClick={() => setMobileMenu(false)}>Trang chủ</a>
         <a href="#shop" onClick={() => setMobileMenu(false)}>Cửa hàng</a>
